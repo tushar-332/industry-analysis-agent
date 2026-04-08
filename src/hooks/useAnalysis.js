@@ -21,7 +21,7 @@ export function useAnalysis() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target: searchInput }),
+        body: JSON.stringify({ company_name: searchInput }),
       })
 
       if (!response.ok) {
@@ -33,7 +33,8 @@ export function useAnalysis() {
 
       setAnalysisResult({
         target: searchInput,
-        content: data.content,
+        analysis: data.analysis,
+        metadata: data.metadata,
         timestamp: new Date().toLocaleString(),
       })
       setActiveTab('overview')
@@ -54,7 +55,7 @@ export function useAnalysis() {
 
     const presentationContent = `Based on this industry analysis for ${analysisResult.target}:
 
-${analysisResult.content}
+${JSON.stringify(analysisResult.analysis, null, 2)}
 
 Create a concise Gamma presentation outline with:
 - 5-7 slide titles
