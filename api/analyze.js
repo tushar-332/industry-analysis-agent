@@ -290,22 +290,31 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to reach Anthropic API' })
   }
 
-  // Parse the JSON response
+  // Parse the JSON response — try multiple extraction strategies
   let analysis
-  try {
-    analysis = JSON.parse(rawText)
-  } catch {
-    // Strip markdown fences if present and retry
-    const stripped = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-    try {
-      analysis = JSON.parse(stripped)
-    } catch {
-      console.error('Failed to parse Claude response as JSON:', rawText.slice(0, 500))
-      return res.status(502).json({
-        error: 'Model returned non-JSON response',
-        raw: rawText.slice(0, 1000),
-      })
-    }
+  const tryParse = (str) => { try { return JSON.parse(str) } catch { return null } }
+
+  // 1. Direct parse
+  analysis = tryParse(rawText)
+
+  // 2. Strip markdown fences
+  if (!analysis) {
+    const stripped = rawText.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim()
+    analysis = tryParse(stripped)
+  }
+
+  // 3. Extract first { ... } block (handles preamble/postamble text)
+  if (!analysis) {
+    const match = rawText.match(/\{[\s\S]*\}/)
+    if (match) analysis = tryParse(match[0])
+  }
+
+  if (!analysis) {
+    console.error('Failed to parse response as JSON. Raw (first 1000 chars):', rawText.slice(0, 1000))
+    return res.status(502).json({
+      error: 'Model returned non-JSON response',
+      raw: rawText.slice(0, 1000),
+    })
   }
 
   return res.status(200).json({
