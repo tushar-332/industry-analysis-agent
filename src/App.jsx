@@ -3,7 +3,6 @@ import { TABS } from './constants/tabs'
 import Header from './components/Header'
 import SearchBar from './components/SearchBar'
 import ErrorMessage from './components/ErrorMessage'
-import MetaInfo from './components/MetaInfo'
 import TabNavigation from './components/TabNavigation'
 import ContentArea from './components/ContentArea'
 import LoadingState from './components/LoadingState'
@@ -14,10 +13,19 @@ export default function App() {
     searchInput, setSearchInput,
     selectedFramework, setSelectedFramework,
     selectedScope, setSelectedScope,
-    isLoading, analysisResult,
+    isLoading, loadingStep, LOADING_STEPS,
+    analysisResult,
     activeTab, setActiveTab,
-    error, runAudit, generatePresentation,
+    error, setError,
+    runAudit,
+    exportJson,
+    exportMarkdown,
+    generatePresentation,
   } = useAnalysis()
+
+  const meta = analysisResult?.analysis?.metadata || {}
+  const grade = meta.investment_grade
+  const gradeCls = grade === 'A' ? 'grade-a' : grade === 'B' ? 'grade-b' : grade === 'C' ? 'grade-c' : ''
 
   return (
     <div className="container">
@@ -32,23 +40,27 @@ export default function App() {
         selectedScope={selectedScope}
         onScopeChange={setSelectedScope}
       />
-      {error && <ErrorMessage message={error} />}
+      {error && <ErrorMessage message={error} onRetry={() => { setError(null); runAudit() }} />}
       {analysisResult ? (
         <div>
           <div className="meta-bar">
             <div className="meta-info">
               <strong>{analysisResult.target}</strong>
-              &nbsp;·&nbsp; {analysisResult.timestamp}
+              <span className="meta-sep">·</span>
+              {analysisResult.timestamp}
+              {grade && <span className={`grade-pill ${gradeCls}`}>Grade {grade}</span>}
             </div>
             <div className="export-buttons">
               <button className="button button-secondary" onClick={generatePresentation}>Gamma →</button>
+              <button className="button button-secondary" onClick={exportMarkdown}>↓ Markdown</button>
+              <button className="button button-secondary" onClick={exportJson}>↓ JSON</button>
             </div>
           </div>
           <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
           <ContentArea analysis={analysisResult.analysis} activeTab={activeTab} />
         </div>
       ) : isLoading ? (
-        <LoadingState target={searchInput} />
+        <LoadingState target={searchInput} step={loadingStep} steps={LOADING_STEPS} />
       ) : (
         <EmptyState />
       )}
