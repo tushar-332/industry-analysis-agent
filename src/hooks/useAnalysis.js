@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 export function useAnalysis() {
   const [searchInput, setSearchInput] = useState('')
+  const [selectedIndustry, setSelectedIndustry] = useState('auto')
+  const [customIndustry, setCustomIndustry] = useState('')
   const [selectedFramework, setSelectedFramework] = useState('comprehensive')
   const [selectedScope, setSelectedScope] = useState('global')
   const [isLoading, setIsLoading] = useState(false)
@@ -41,6 +43,7 @@ export function useAnalysis() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           company_name: searchInput,
+          industry: selectedIndustry === 'custom' ? customIndustry : selectedIndustry,
           framework: selectedFramework,
           scope: selectedScope,
         }),
@@ -239,6 +242,8 @@ Create a 7-9 slide executive presentation:
 
   return {
     searchInput, setSearchInput,
+    selectedIndustry, setSelectedIndustry,
+    customIndustry, setCustomIndustry,
     selectedFramework, setSelectedFramework,
     selectedScope, setSelectedScope,
     isLoading, loadingStep, LOADING_STEPS,

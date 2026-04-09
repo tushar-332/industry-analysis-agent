@@ -11,6 +11,8 @@ import EmptyState from './components/EmptyState'
 export default function App() {
   const {
     searchInput, setSearchInput,
+    selectedIndustry, setSelectedIndustry,
+    customIndustry, setCustomIndustry,
     selectedFramework, setSelectedFramework,
     selectedScope, setSelectedScope,
     isLoading, loadingStep, LOADING_STEPS,
@@ -35,6 +37,10 @@ export default function App() {
         onChange={setSearchInput}
         onSubmit={runAudit}
         isLoading={isLoading}
+        selectedIndustry={selectedIndustry}
+        onIndustryChange={setSelectedIndustry}
+        customIndustry={customIndustry}
+        onCustomIndustryChange={setCustomIndustry}
         selectedFramework={selectedFramework}
         onFrameworkChange={setSelectedFramework}
         selectedScope={selectedScope}

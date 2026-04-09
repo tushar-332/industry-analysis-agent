@@ -1,8 +1,15 @@
 export default function EmptyState() {
   return (
     <div className="empty-state">
-      <p>Enter a company name or waste management sub-sector to begin analysis.</p>
-      <p>The audit will assess Porter&apos;s 5 Forces, PESTEL, circularity, SWOT, value chain, moat, unit economics, regulatory risks, and strategic red flags.</p>
+      <div className="empty-state-icon">📊</div>
+      <p>Enter a company name or industry sector to begin.</p>
+      <p>
+        Supports waste management, healthcare, technology, manufacturing, retail,
+        real estate, energy, telecom, financial services, pharma/biotech, and custom industries.
+      </p>
+      <p style={{ marginTop: '8px', fontSize: '12px' }}>
+        Delivers Porter's 5 Forces · PESTEL · SWOT · Value Chain · Moat · Unit Economics · Regulatory · Red Flags · Investment Thesis
+      </p>
     </div>
   )
 }
