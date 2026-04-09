@@ -269,10 +269,14 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
-        max_tokens: 8000,
+        max_tokens: 16000,
         temperature: 0,
         system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
+        // Prefill forces Claude to start immediately with { — no preamble possible
+        messages: [
+          { role: 'user', content: userMessage },
+          { role: 'assistant', content: '{' },
+        ],
       }),
     })
 
@@ -284,7 +288,8 @@ export default async function handler(req, res) {
     }
 
     const data = await anthropicRes.json()
-    rawText = data.content[0].text
+    // Prepend the prefilled '{' since Claude continues from after it
+    rawText = '{' + data.content[0].text
   } catch (err) {
     console.error('Anthropic fetch error:', err)
     return res.status(500).json({ error: 'Failed to reach Anthropic API' })
