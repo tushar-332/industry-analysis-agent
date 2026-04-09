@@ -236,7 +236,7 @@ Return this exact structure:
   }
 }`
 
-const GEMINI_MODEL = 'gemini-1.5-pro'
+const GEMINI_MODEL = 'gemini-2.0-flash'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
