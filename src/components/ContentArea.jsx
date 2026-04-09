@@ -1,9 +1,8 @@
-export default function ContentArea({ content }) {
-  // dangerouslySetInnerHTML is intentional here — content is Claude's HTML response
-  // from a controlled Anthropic API call, not user input
+import { renderTabContent } from '../utils/renderAnalysis'
+
+export default function ContentArea({ analysis, activeTab }) {
+  const html = renderTabContent(activeTab, analysis)
   return (
-    <div className="content-area">
-      <div dangerouslySetInnerHTML={{ __html: content }} />
-    </div>
+    <div className="content-area" dangerouslySetInnerHTML={{ __html: html }} />
   )
 }

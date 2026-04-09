@@ -1,36 +1,62 @@
-export default function SearchBar({ value, onChange, onSubmit, isLoading, hasResult, onPresent }) {
-  function handleKeyPress(e) {
-    if (e.key === 'Enter') onSubmit()
-  }
-
+export default function SearchBar({
+  value, onChange, onSubmit, isLoading,
+  selectedFramework, onFrameworkChange,
+  selectedScope, onScopeChange,
+}) {
   return (
-    <div className="search-section">
-      <div className="form-group">
+    <div className="search-panel">
+      <div className="form-group" style={{ marginBottom: '10px' }}>
         <label>Company or Sub-Sector</label>
         <input
           type="text"
           placeholder="e.g., Waste Management Inc., Medical Waste Disposal, Recycling Operations"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          onKeyPress={handleKeyPress}
+          onKeyPress={(e) => { if (e.key === 'Enter') onSubmit() }}
         />
       </div>
-      <button
-        className="button button-primary"
-        onClick={onSubmit}
-        disabled={isLoading}
-      >
-        {isLoading ? 'Analyzing...' : 'Run Audit'}
-      </button>
-      {hasResult && (
+      <div className="filter-grid">
+        <div className="form-group">
+          <label>Analysis Framework</label>
+          <select
+            className="filter-select"
+            value={selectedFramework}
+            onChange={(e) => onFrameworkChange(e.target.value)}
+          >
+            <option value="comprehensive">Comprehensive (All Frameworks)</option>
+            <option value="porters_only">Porter's 5 Forces Only</option>
+            <option value="pestel_only">PESTEL Only</option>
+            <option value="swot_moat">SWOT &amp; Moat</option>
+            <option value="economics_regulatory">Unit Economics &amp; Regulatory</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div className="form-group">
+          <label>Scope &amp; Context</label>
+          <select
+            className="filter-select"
+            value={selectedScope}
+            onChange={(e) => onScopeChange(e.target.value)}
+          >
+            <option value="global">Global</option>
+            <option value="regional">Regional</option>
+            <option value="competitor">Competitor Analysis</option>
+            <option value="investment_stage">Investment Stage</option>
+            <option value="acquisition_target">Acquisition Target</option>
+            <option value="regulatory_deep_dive">Regulatory Deep Dive</option>
+          </select>
+        </div>
+      </div>
+      <div style={{ marginTop: '12px' }}>
         <button
-          className="button button-secondary"
-          onClick={onPresent}
+          className="button button-primary"
+          style={{ width: '100%' }}
+          onClick={onSubmit}
           disabled={isLoading}
         >
-          Generate Presentation →
+          {isLoading ? 'Analyzing…' : 'Run Audit'}
         </button>
-      )}
+      </div>
     </div>
   )
 }

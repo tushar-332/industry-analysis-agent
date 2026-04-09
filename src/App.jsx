@@ -12,6 +12,8 @@ import EmptyState from './components/EmptyState'
 export default function App() {
   const {
     searchInput, setSearchInput,
+    selectedFramework, setSelectedFramework,
+    selectedScope, setSelectedScope,
     isLoading, analysisResult,
     activeTab, setActiveTab,
     error, runAudit, generatePresentation,
@@ -25,15 +27,25 @@ export default function App() {
         onChange={setSearchInput}
         onSubmit={runAudit}
         isLoading={isLoading}
-        hasResult={!!analysisResult}
-        onPresent={generatePresentation}
+        selectedFramework={selectedFramework}
+        onFrameworkChange={setSelectedFramework}
+        selectedScope={selectedScope}
+        onScopeChange={setSelectedScope}
       />
       {error && <ErrorMessage message={error} />}
       {analysisResult ? (
         <div>
-          <MetaInfo target={analysisResult.target} timestamp={analysisResult.timestamp} />
+          <div className="meta-bar">
+            <div className="meta-info">
+              <strong>{analysisResult.target}</strong>
+              &nbsp;·&nbsp; {analysisResult.timestamp}
+            </div>
+            <div className="export-buttons">
+              <button className="button button-secondary" onClick={generatePresentation}>Gamma →</button>
+            </div>
+          </div>
           <TabNavigation tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
-          <ContentArea content={analysisResult.content} />
+          <ContentArea analysis={analysisResult.analysis} activeTab={activeTab} />
         </div>
       ) : isLoading ? (
         <LoadingState target={searchInput} />
