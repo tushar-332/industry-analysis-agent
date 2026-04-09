@@ -1,27 +1,24 @@
-// ── Industry context (terse — 3-5 lines each) ────────────────────────────────
 const INDUSTRY_CONTEXT = {
-  waste_management:    'Waste: hauling EBITDA 8-12% (low moat), disposal 25-35% (high moat, landfill permits 5-10yr barrier). ESG: PFAS, methane/LFG, EPR laws. Peers: WM, RSG, WCN.',
-  healthcare_services: 'Healthcare: reimbursement mix (FFS/VBC/capitated) drives margin. CMS + state boards = regulatory moat. Labor shortage = wage risk. Peers: UNH, CVS, HUM.',
-  technology_saas:     'SaaS: NRR >110% = moat. CAC payback <18mo ideal. Rule of 40 (growth%+EBITDA%) ≥40 = healthy. AI commoditization risk. Peers: vary by segment (CRM, WDAY, DDOG).',
-  manufacturing:       'Manufacturing: CapEx intensity + commodity input exposure (steel/aluminum/energy). Book-to-bill ratio = demand signal. Working capital cycle critical. Peers: CAT, IR, HON.',
-  retail_consumer:     'Retail: brand moat + inventory turns + repeat purchase rate. Omnichannel table stakes. Markdown/clearance risk. Gross margin 35-50%. Peers: AMZN, WMT, category leaders.',
-  real_estate:         'REIT: FFO/AFFO not GAAP earnings. Cap rate spread vs. debt cost. Lease expiration waterfall. Office distressed; industrial strong. Peers: PLD, AVB, sector-specific.',
-  energy:              'Energy: regulated (PUC ROE 9-11%) vs. merchant (commodity risk). Energy transition = stranded asset risk. Hedge ratios matter. Peers: NEE, DUK, LNG.',
-  telecom:             'Telecom: ARPU trend + monthly churn = value drivers. Fiber capex $900-1200/home. 5G ROI unproven. Bundling = retention. Peers: VZ, T, TMUS.',
-  financial_services:  'FinServ: NIM compression/expansion drives banks. CET1 ratio = capital buffer. Fintech = deposit flight risk. ESG: CRA, fair lending. Peers: JPM, GS, V.',
-  pharma_biotech:      'Pharma: pipeline probability (Ph3→approval ~60%). Patent cliff timing. IRA drug pricing negotiation risk. CMC scale-up risk for biologics. Peers: PFE, MRNA, VRTX.',
+  waste_management:    'Landfill permitting = moat (5-10yr, $50-200M/site). Hauling 8-12% EBITDA, disposal 25-35%. PFAS/methane/EPR key ESG risks. Peers: WM, RSG, WCN.',
+  healthcare_services: 'Reimbursement model (FFS/VBC/capitated) = key lever. MLR, member churn critical. CMS rule changes = regulatory risk. Peers: UNH, CVS, HUM.',
+  technology_saas:     'NRR >110% = compounding moat. Rule of 40 (growth%+EBITDA%) ≥40 healthy. CAC payback <18mo ideal. AI commoditization risk. Peers: CRM, WDAY, DDOG.',
+  manufacturing:       'CapEx intensity + commodity input exposure (steel/aluminum/energy). Book-to-bill = demand signal. Working capital cycle critical. Peers: CAT, IR, HON.',
+  retail_consumer:     'Brand moat + inventory turns + repeat purchase rate. Omnichannel table stakes. Markdown risk. Gross margin 35-50%. Peers: AMZN, WMT, category leaders.',
+  real_estate:         'FFO/AFFO (not GAAP) = key metric. Cap rate spread vs. debt cost. Lease expiration waterfall. Office distressed; industrial strong. Peers: PLD, AVB.',
+  energy:              'Regulated (PUC ROE 9-11%) vs. merchant (commodity risk). Energy transition = stranded asset risk. Hedge ratios matter. Peers: NEE, DUK, LNG.',
+  telecom:             'ARPU trend + monthly churn = value drivers. Fiber capex $900-1200/home. 5G ROI unproven. Bundling = retention. Peers: VZ, T, TMUS.',
+  financial_services:  'NIM compression/expansion drives banks. CET1 ratio = capital buffer. Fintech = deposit flight risk. ESG: CRA, fair lending. Peers: JPM, GS, V.',
+  pharma_biotech:      'Pipeline probability (Ph3→approval ~60%). Patent cliff timing. IRA drug pricing risk. CMC scale-up risk for biologics. Peers: PFE, MRNA, VRTX.',
 }
 
-// ── Scope → sections to include ──────────────────────────────────────────────
 const SCOPE_SECTIONS = {
   regulatory_deep_dive: 'executive_summary, pestel, regulatory_and_esg_friction, red_flags',
   competitor:           'executive_summary, porters_five_forces, swot, moat_assessment',
-  investment_stage:     'executive_summary, unit_economics, moat_assessment, investment_thesis, red_flags',
-  acquisition_target:   'executive_summary, swot, unit_economics, red_flags, investment_thesis',
+  investment_stage:     'executive_summary, unit_economics, moat_assessment, red_flags',
+  acquisition_target:   'executive_summary, swot, unit_economics, red_flags',
   regional:             'executive_summary, porters_five_forces, pestel, regulatory_and_esg_friction',
 }
 
-// ── Framework → sections to include ──────────────────────────────────────────
 const FRAMEWORK_SECTIONS = {
   porters_only:         'executive_summary, porters_five_forces',
   pestel_only:          'executive_summary, pestel',
@@ -29,77 +26,75 @@ const FRAMEWORK_SECTIONS = {
   economics_regulatory: 'executive_summary, unit_economics, regulatory_and_esg_friction',
 }
 
-// ── Lean system prompt ────────────────────────────────────────────────────────
-const SYSTEM_PROMPT = `You are a PE analyst producing concise investment analysis.
+const SYSTEM_PROMPT = `You are a fast PE analyst. Produce terse, investment-grade analysis.
 
 RULES:
-- ONLY analyze the sections listed in the user message. Return {} for all others.
-- Be terse: 2-3 key insights per section. No filler.
-- Source every claim: (per 10-K, High) | (est., Medium, assumes X) | (benchmark, High)
-- Mention 1 competitor per section where relevant.
-- Assign investment_grade: A (PE-ready) / B (needs work) / C (not ready)
+- Output JSON only. No preamble, no markdown fences.
+- Only populate sections listed by the user. Return {} for all others.
+- 2-3 key points per section. No filler sentences.
+- Source every claim: (per 10-K, High) | (est., Medium) | (benchmark, High)
+- 1 competitor comparison per section where relevant.
+- Assign investment_grade A/B/C in metadata.
 
-OUTPUT: Valid JSON only. No markdown fences. No preamble. Max 3000 tokens.
-
-JSON STRUCTURE (return only requested sections; use {} for skipped ones):
+JSON SCHEMA (populate requested sections only):
 {
-  "metadata": { "target": "", "industry": "", "analysis_date": "", "data_quality": "", "investment_grade": "A|B|C", "grade_rationale": "", "sources_cited": [] },
-  "executive_summary": { "company_positioning": "", "moat_strength": "", "base_case_thesis": "", "bull_case_catalyst": "", "bear_case_risk": "", "key_findings": "" },
+  "metadata": {"target":"","industry":"","analysis_date":"","data_quality":"","investment_grade":"A|B|C","grade_rationale":"","sources_cited":[]},
+  "executive_summary": {"company_positioning":"","moat_strength":"","base_case_thesis":"","bull_case_catalyst":"","bear_case_risk":"","key_findings":""},
   "porters_five_forces": {
-    "supplier_power":        { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "buyer_power":           { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "threat_of_substitutes": { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "threat_of_new_entrants":{ "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "competitive_rivalry":   { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "industry_attractiveness_score": 0
+    "supplier_power":        {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "buyer_power":           {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "threat_of_substitutes": {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "threat_of_new_entrants":{"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "competitive_rivalry":   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "industry_attractiveness_score":0
   },
   "pestel": {
-    "political":     { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" },
-    "economic":      { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" },
-    "social":        { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" },
-    "technological": { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" },
-    "environmental": { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" },
-    "legal":         { "key_factors": "", "impact": "positive|neutral|negative", "confidence": "", "narrative": "" }
+    "political":    {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
+    "economic":     {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
+    "social":       {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
+    "technological":{"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
+    "environmental":{"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
+    "legal":        {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""}
   },
-  "circularity_gap_analysis": { "current_state": "", "gap_percentage": "", "confidence": "", "barriers": { "technical": "", "economic": "", "regulatory": "" }, "upside_scenario": "", "narrative": "" },
-  "swot": { "strengths": [], "weaknesses": [], "opportunities": [], "threats": [] },
+  "circularity_gap_analysis": {"current_state":"","gap_percentage":"","confidence":"","barriers":{"technical":"","economic":"","regulatory":""},"upside_scenario":"","narrative":""},
+  "swot": {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]},
   "value_chain_analysis": {
-    "collection":         { "role": "", "margin": "", "margin_range": "", "moat_strength": "", "narrative": "" },
-    "transport":          { "role": "", "margin": "", "margin_range": "", "fuel_exposure": "", "moat_strength": "", "narrative": "" },
-    "sorting_processing": { "role": "", "margin": "", "margin_range": "", "automation_risk": "", "moat_strength": "", "narrative": "" },
-    "disposal":           { "role": "", "margin": "", "margin_range": "", "moat_strength": "", "narrative": "" },
-    "recycling":          { "role": "", "margin": "variable", "margin_range": "", "moat_strength": "", "narrative": "" }
+    "collection":        {"role":"","margin":"","margin_range":"","moat_strength":"","narrative":""},
+    "transport":         {"role":"","margin":"","margin_range":"","fuel_exposure":"","moat_strength":"","narrative":""},
+    "sorting_processing":{"role":"","margin":"","margin_range":"","automation_risk":"","moat_strength":"","narrative":""},
+    "disposal":          {"role":"","margin":"","margin_range":"","moat_strength":"","narrative":""},
+    "recycling":         {"role":"","margin":"variable","margin_range":"","moat_strength":"","narrative":""}
   },
   "moat_assessment": {
-    "permits_and_licensing":                   { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "route_density_and_customer_stickiness":   { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "scale_and_unit_economics":                { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "capital_requirements":                    { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "regulatory_and_environmental_compliance": { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "brand_and_relationships":                 { "score": 0, "confidence": "", "narrative": "", "competitive_benchmarks": { "target": "", "peer_1": "", "delta": "" } },
-    "overall_moat_strength": 0, "moat_narrative": ""
+    "permits_and_licensing":                   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "route_density_and_customer_stickiness":   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "scale_and_unit_economics":                {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "capital_requirements":                    {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "regulatory_and_environmental_compliance": {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "brand_and_relationships":                 {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
+    "overall_moat_strength":0,"moat_narrative":""
   },
   "unit_economics": {
-    "typical_ebitda_margin_percent": "", "revenue_per_ton_hauling": "", "revenue_per_ton_disposal": "", "confidence": "",
-    "cost_structure": { "labor_percent_of_opex": "", "fuel_percent_of_opex": "", "equipment_depreciation_percent_of_opex": "", "landfill_tipping_fees_percent_of_revenue": "", "other_opex_percent": "" },
-    "margin_drivers_ranked_by_impact": [],
-    "leverage_sensitivity": { "if_fuel_increases_10_percent": "", "if_labor_wages_increase_5_percent": "", "if_tipping_fees_increase_20_percent": "" },
-    "competitive_benchmarks": { "target_ebitda_margin": "", "peer_1_ebitda_margin": "", "delta": "" },
-    "narrative": ""
+    "typical_ebitda_margin_percent":"","revenue_per_ton_hauling":"","revenue_per_ton_disposal":"","confidence":"",
+    "cost_structure":{"labor_percent_of_opex":"","fuel_percent_of_opex":"","equipment_depreciation_percent_of_opex":"","landfill_tipping_fees_percent_of_revenue":"","other_opex_percent":""},
+    "margin_drivers_ranked_by_impact":[],
+    "leverage_sensitivity":{"if_fuel_increases_10_percent":"","if_labor_wages_increase_5_percent":"","if_tipping_fees_increase_20_percent":""},
+    "competitive_benchmarks":{"target_ebitda_margin":"","peer_1_ebitda_margin":"","delta":""},
+    "narrative":""
   },
   "regulatory_and_esg_friction": {
-    "carbon_and_methane_liabilities": { "scope": "", "regulation_timeline": "", "estimated_cost_impact": "", "confidence": "", "hedging_options": "", "narrative": "" },
-    "upcoming_legislation": [],
-    "esg_as_competitive_advantage_or_cost": { "monetizable": "yes|no", "narrative": "" },
-    "compliance_capex_estimate": "", "confidence": "", "narrative": ""
+    "carbon_and_methane_liabilities":{"scope":"","regulation_timeline":"","estimated_cost_impact":"","confidence":"","hedging_options":"","narrative":""},
+    "upcoming_legislation":[],
+    "esg_as_competitive_advantage_or_cost":{"monetizable":"yes|no","narrative":""},
+    "compliance_capex_estimate":"","confidence":"","narrative":""
   },
-  "red_flags": [{ "title": "", "description": "", "probability": "High|Medium|Low", "timeline": "", "magnitude": "", "trigger": "", "mitigation": "", "portfolio_impact": "" }],
-  "investment_thesis": {
-    "headline": "",
-    "base_case": { "scenario": "", "ebitda_margin_trajectory": "stable|compression|expansion", "key_assumptions": [] },
-    "bull_case": { "scenario": "", "key_catalysts": [], "margin_upside": "" },
-    "bear_case": { "scenario": "", "key_triggers": [], "margin_downside": "" },
-    "key_metrics_to_monitor": []
+  "red_flags":[{"title":"","description":"","probability":"High|Medium|Low","timeline":"","magnitude":"","trigger":"","mitigation":"","portfolio_impact":""}],
+  "investment_thesis":{
+    "headline":"",
+    "base_case":{"scenario":"","ebitda_margin_trajectory":"stable|compression|expansion","key_assumptions":[]},
+    "bull_case":{"scenario":"","key_catalysts":[],"margin_upside":""},
+    "bear_case":{"scenario":"","key_triggers":[],"margin_downside":""},
+    "key_metrics_to_monitor":[]
   }
 }`
 
@@ -121,21 +116,16 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' })
   }
 
-  // Determine sections to include (scope takes priority over framework)
   const sectionsStr = SCOPE_SECTIONS[scope] || FRAMEWORK_SECTIONS[framework] || null
-
-  // Industry context (terse)
   const industryCtx = INDUSTRY_CONTEXT[industry] || (industry && industry !== 'auto' ? `Industry: ${industry}.` : '')
 
-  // Build concise user message
   const parts = [`Analyze: ${company_name.trim()}`]
-  if (industryCtx) parts.push(industryCtx)
-  if (sectionsStr) parts.push(`Include ONLY: ${sectionsStr}. Return {} for all other sections.`)
-  else parts.push('Include ALL sections.')
+  if (industryCtx) parts.push(`Industry context: ${industryCtx}`)
+  if (sectionsStr) parts.push(`Sections to include: ${sectionsStr}. Return {} for all others.`)
+  else parts.push('Include all sections.')
 
   const userMessage = parts.join('\n')
 
-  // 55-second abort (Vercel max = 60s)
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 55000)
 
@@ -151,7 +141,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
-        max_tokens: 3000,
+        max_tokens: 2000,
         temperature: 0,
         system: SYSTEM_PROMPT,
         messages: [
@@ -177,7 +167,7 @@ export default async function handler(req, res) {
     clearTimeout(timeoutId)
     if (err.name === 'AbortError') {
       return res.status(504).json({
-        error: "⏱️ Analysis timed out. Try a narrower framework (e.g., Porter's Only) or shorter company name.",
+        error: "⏱️ Still timing out. Try Porter's Only or PESTEL Only for fastest results.",
         partial: true,
       })
     }
@@ -185,27 +175,21 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Failed to reach Anthropic API' })
   }
 
-  // JSON extraction — 3 strategies
   const tryParse = (str) => { try { return JSON.parse(str) } catch { return null } }
 
   let analysis = tryParse(rawText)
-
   if (!analysis) {
     const stripped = rawText.replace(/^```(?:json)?\s*/im, '').replace(/\s*```\s*$/m, '').trim()
     analysis = tryParse(stripped)
   }
-
   if (!analysis) {
     const match = rawText.match(/\{[\s\S]*\}/)
     if (match) analysis = tryParse(match[0])
   }
 
   if (!analysis) {
-    console.error('Non-JSON response (first 500 chars):', rawText.slice(0, 500))
-    return res.status(502).json({
-      error: 'Model returned non-JSON response. Try again.',
-      raw: rawText.slice(0, 500),
-    })
+    console.error('Non-JSON response:', rawText.slice(0, 500))
+    return res.status(502).json({ error: 'Model returned non-JSON. Try again.', raw: rawText.slice(0, 500) })
   }
 
   return res.status(200).json({
