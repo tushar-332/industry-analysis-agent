@@ -2,6 +2,8 @@ import { useState } from 'react'
 
 export function useAnalysis() {
   const [searchInput, setSearchInput] = useState('')
+  const [selectedFramework, setSelectedFramework] = useState('comprehensive')
+  const [selectedScope, setSelectedScope] = useState('global')
   const [isLoading, setIsLoading] = useState(false)
   const [analysisResult, setAnalysisResult] = useState(null)
   const [activeTab, setActiveTab] = useState('overview')
@@ -21,7 +23,7 @@ export function useAnalysis() {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_name: searchInput }),
+        body: JSON.stringify({ company_name: searchInput, framework: selectedFramework, scope: selectedScope }),
       })
 
       if (!response.ok) {
@@ -73,6 +75,10 @@ Create a concise Gamma presentation outline with:
   return {
     searchInput,
     setSearchInput,
+    selectedFramework,
+    setSelectedFramework,
+    selectedScope,
+    setSelectedScope,
     isLoading,
     analysisResult,
     activeTab,

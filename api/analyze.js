@@ -243,7 +243,7 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { company_name, industry } = req.body
+  const { company_name, industry, framework, scope } = req.body
 
   if (!company_name || !company_name.trim()) {
     return res.status(400).json({ error: 'company_name is required' })
@@ -254,9 +254,34 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' })
   }
 
-  const userMessage = industry
+  // Build framework focus instruction
+  const FRAMEWORK_INSTRUCTIONS = {
+    porters_only:         'Focus ONLY on porters_five_forces. For all other sections, return minimal placeholder values.',
+    pestel_only:          'Focus ONLY on pestel. For all other sections, return minimal placeholder values.',
+    swot_moat:            'Focus ONLY on swot and moat_assessment. For all other sections, return minimal placeholder values.',
+    economics_regulatory: 'Focus ONLY on unit_economics and regulatory_and_esg_friction. For all other sections, return minimal placeholder values.',
+    custom:               'Apply all frameworks but prioritize strategic flexibility over completeness.',
+    comprehensive:        null, // default — no extra instruction
+  }
+
+  const SCOPE_INSTRUCTIONS = {
+    regional:             'Narrow your analysis to regional (sub-national) dynamics — local regulations, regional haulers, territory economics.',
+    competitor:           'Frame this as a competitor tear-down — relative strengths/weaknesses vs. peers, not stand-alone fundamentals.',
+    investment_stage:     'Frame this as a late-stage growth equity analysis — focus on scalability, unit economics, and exit multiples.',
+    acquisition_target:   'Frame this as M&A due diligence — flag integration risks, hidden liabilities, and synergy potential.',
+    regulatory_deep_dive: 'Double the depth on regulatory_and_esg_friction, legal PESTEL, and upcoming_legislation. Mark all regulatory timelines explicitly.',
+    global:               null, // default — no extra instruction
+  }
+
+  const frameworkNote = FRAMEWORK_INSTRUCTIONS[framework] || null
+  const scopeNote     = SCOPE_INSTRUCTIONS[scope]     || null
+
+  let userMessage = industry
     ? `Analyze: ${company_name.trim()} | Industry context: ${industry.trim()}`
     : `Analyze: ${company_name.trim()}`
+
+  if (frameworkNote) userMessage += `\n\nFRAMEWORK INSTRUCTION: ${frameworkNote}`
+  if (scopeNote)     userMessage += `\n\nSCOPE INSTRUCTION: ${scopeNote}`
 
   let rawText
   try {
@@ -327,6 +352,8 @@ export default async function handler(req, res) {
     metadata: {
       company_name: company_name.trim(),
       industry: industry?.trim() ?? null,
+      framework: framework ?? 'comprehensive',
+      scope: scope ?? 'global',
       generated_at: new Date().toISOString(),
       model: CLAUDE_MODEL,
     },
