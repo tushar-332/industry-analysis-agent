@@ -236,6 +236,8 @@ Return this exact structure:
   }
 }`
 
+const GEMINI_MODEL = 'gemini-2.0-flash'
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' })
@@ -247,7 +249,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'company_name is required' })
   }
 
-  const apiKey = process.env.ANTHROPIC_API_KEY
+  const apiKey = process.env.GEMINI_API_KEY
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured' })
   }
@@ -258,47 +260,52 @@ export default async function handler(req, res) {
 
   let rawText
   try {
-    const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 8000,
-        temperature: 0,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      }),
-    })
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+          generationConfig: {
+            temperature: 0,
+            maxOutputTokens: 8000,
+            responseMimeType: 'application/json',
+          },
+        }),
+      }
+    )
 
-    if (!anthropicRes.ok) {
-      const err = await anthropicRes.json().catch(() => ({}))
-      return res.status(anthropicRes.status).json({
-        error: err.error?.message || `Anthropic API error: ${anthropicRes.status}`,
+    if (!geminiRes.ok) {
+      const err = await geminiRes.json().catch(() => ({}))
+      return res.status(geminiRes.status).json({
+        error: err.error?.message || `Gemini API error: ${geminiRes.status}`,
       })
     }
 
-    const data = await anthropicRes.json()
-    rawText = data.content[0].text
+    const data = await geminiRes.json()
+    rawText = data.candidates?.[0]?.content?.parts?.[0]?.text
+    if (!rawText) {
+      console.error('Unexpected Gemini response shape:', JSON.stringify(data).slice(0, 500))
+      return res.status(502).json({ error: 'Empty response from Gemini API' })
+    }
   } catch (err) {
-    console.error('Anthropic fetch error:', err)
-    return res.status(500).json({ error: 'Failed to reach Anthropic API' })
+    console.error('Gemini fetch error:', err)
+    return res.status(500).json({ error: 'Failed to reach Gemini API' })
   }
 
-  // Parse the JSON response from Claude
+  // Parse the JSON response
   let analysis
   try {
     analysis = JSON.parse(rawText)
   } catch {
-    // Claude occasionally wraps JSON in markdown fences despite instructions — strip and retry
+    // Strip markdown fences if present and retry
     const stripped = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
     try {
       analysis = JSON.parse(stripped)
     } catch {
-      console.error('Failed to parse Claude response as JSON:', rawText.slice(0, 500))
+      console.error('Failed to parse Gemini response as JSON:', rawText.slice(0, 500))
       return res.status(502).json({
         error: 'Model returned non-JSON response',
         raw: rawText.slice(0, 1000),
@@ -312,7 +319,7 @@ export default async function handler(req, res) {
       company_name: company_name.trim(),
       industry: industry?.trim() ?? null,
       generated_at: new Date().toISOString(),
-      model: 'claude-sonnet-4-20250514',
+      model: GEMINI_MODEL,
     },
   })
 }
