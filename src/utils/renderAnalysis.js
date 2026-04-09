@@ -57,7 +57,11 @@ function sourcePill(source) {
 }
 
 function benchmarkTable(cb, label) {
+  // Accept both competitive_benchmarks object and peer_comparison string
   if (!cb) return ''
+  if (typeof cb === 'string') {
+    return `<div class="benchmark-block"><div class="benchmark-title">Peer Comparison</div><div style="font-size:11px;color:var(--text-2);">${cb}</div></div>`
+  }
   const rows = Object.entries(cb)
     .filter(([k]) => k !== 'delta')
     .map(([k, v]) => `<tr><td class="bench-key">${k.replace(/_/g, ' ')}</td><td class="bench-val">${v || '—'}</td></tr>`)
@@ -153,7 +157,7 @@ export function renderPorters(a) {
             <div class="force-bar" style="width:${pct}%;background:${scoreBarColor(score)};"></div>
           </div>
           <div class="force-narrative">${f.narrative || ''}</div>
-          ${benchmarkTable(f.competitive_benchmarks, label)}
+          ${benchmarkTable(f.competitive_benchmarks || f.peer_comparison, label)}
         </div>
       </div>`
   }).join('')
@@ -347,7 +351,7 @@ export function renderMoat(a) {
           </div>
         </div>
         <div style="font-size:12px;color:var(--text-2);line-height:1.6;margin-bottom:8px;">${d.narrative || ''}</div>
-        ${benchmarkTable(d.competitive_benchmarks, label)}
+        ${benchmarkTable(d.competitive_benchmarks || d.peer_comparison, label)}
       </div>`
   }).join('')
   const overall = m.overall_moat_strength || 0

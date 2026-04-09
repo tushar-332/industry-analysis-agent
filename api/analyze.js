@@ -26,79 +26,27 @@ const FRAMEWORK_SECTIONS = {
   economics_regulatory: 'executive_summary, unit_economics, regulatory_and_esg_friction',
 }
 
-const SYSTEM_PROMPT = `You are a fast PE analyst. Produce terse, investment-grade analysis.
-
-Output ONLY valid JSON. No markdown, no preamble. Start with { end with }.
+const SYSTEM_PROMPT = `You are a fast PE analyst. Output ONLY valid JSON. No markdown, no preamble. Start with { end with }.
 
 RULES:
-- Output JSON only. No preamble, no markdown fences.
-- Only populate sections listed by the user. Return {} for all others.
-- 2-3 key points per section. No filler sentences.
-- Source every claim: (per 10-K, High) | (est., Medium) | (benchmark, High)
-- 1 competitor comparison per section where relevant.
-- Assign investment_grade A/B/C in metadata.
+1. JSON only. 1-2 sentence insights max per point. No filler.
+2. Source every claim: (per 10-K) | (est.) | (benchmark)
+3. Only populate sections the user requests. Use {} for all others.
+4. Assign investment_grade A/B/C in metadata (A=PE-ready, B=needs work, C=not ready).
 
-JSON SCHEMA (populate requested sections only):
-{
-  "metadata": {"target":"","industry":"","analysis_date":"","data_quality":"","investment_grade":"A|B|C","grade_rationale":"","sources_cited":[]},
-  "executive_summary": {"company_positioning":"","moat_strength":"","base_case_thesis":"","bull_case_catalyst":"","bear_case_risk":"","key_findings":""},
-  "porters_five_forces": {
-    "supplier_power":        {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "buyer_power":           {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "threat_of_substitutes": {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "threat_of_new_entrants":{"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "competitive_rivalry":   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "industry_attractiveness_score":0
-  },
-  "pestel": {
-    "political":    {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
-    "economic":     {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
-    "social":       {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
-    "technological":{"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
-    "environmental":{"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""},
-    "legal":        {"key_factors":"","impact":"positive|neutral|negative","confidence":"","narrative":""}
-  },
-  "circularity_gap_analysis": {"current_state":"","gap_percentage":"","confidence":"","barriers":{"technical":"","economic":"","regulatory":""},"upside_scenario":"","narrative":""},
-  "swot": {"strengths":[],"weaknesses":[],"opportunities":[],"threats":[]},
-  "value_chain_analysis": {
-    "collection":        {"role":"","margin":"","margin_range":"","moat_strength":"","narrative":""},
-    "transport":         {"role":"","margin":"","margin_range":"","fuel_exposure":"","moat_strength":"","narrative":""},
-    "sorting_processing":{"role":"","margin":"","margin_range":"","automation_risk":"","moat_strength":"","narrative":""},
-    "disposal":          {"role":"","margin":"","margin_range":"","moat_strength":"","narrative":""},
-    "recycling":         {"role":"","margin":"variable","margin_range":"","moat_strength":"","narrative":""}
-  },
-  "moat_assessment": {
-    "permits_and_licensing":                   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "route_density_and_customer_stickiness":   {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "scale_and_unit_economics":                {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "capital_requirements":                    {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "regulatory_and_environmental_compliance": {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "brand_and_relationships":                 {"score":0,"confidence":"","narrative":"","competitive_benchmarks":{"target":"","peer_1":"","delta":""}},
-    "overall_moat_strength":0,"moat_narrative":""
-  },
-  "unit_economics": {
-    "typical_ebitda_margin_percent":"","revenue_per_ton_hauling":"","revenue_per_ton_disposal":"","confidence":"",
-    "cost_structure":{"labor_percent_of_opex":"","fuel_percent_of_opex":"","equipment_depreciation_percent_of_opex":"","landfill_tipping_fees_percent_of_revenue":"","other_opex_percent":""},
-    "margin_drivers_ranked_by_impact":[],
-    "leverage_sensitivity":{"if_fuel_increases_10_percent":"","if_labor_wages_increase_5_percent":"","if_tipping_fees_increase_20_percent":""},
-    "competitive_benchmarks":{"target_ebitda_margin":"","peer_1_ebitda_margin":"","delta":""},
-    "narrative":""
-  },
-  "regulatory_and_esg_friction": {
-    "carbon_and_methane_liabilities":{"scope":"","regulation_timeline":"","estimated_cost_impact":"","confidence":"","hedging_options":"","narrative":""},
-    "upcoming_legislation":[],
-    "esg_as_competitive_advantage_or_cost":{"monetizable":"yes|no","narrative":""},
-    "compliance_capex_estimate":"","confidence":"","narrative":""
-  },
-  "red_flags":[{"title":"","description":"","probability":"High|Medium|Low","timeline":"","magnitude":"","trigger":"","mitigation":"","portfolio_impact":""}],
-  "investment_thesis":{
-    "headline":"",
-    "base_case":{"scenario":"","ebitda_margin_trajectory":"stable|compression|expansion","key_assumptions":[]},
-    "bull_case":{"scenario":"","key_catalysts":[],"margin_upside":""},
-    "bear_case":{"scenario":"","key_triggers":[],"margin_downside":""},
-    "key_metrics_to_monitor":[]
-  }
-}`
+SECTION FORMATS:
+metadata: {target, industry, analysis_date, data_quality, investment_grade, grade_rationale, sources_cited:[]}
+executive_summary: {company_positioning, moat_strength, base_case_thesis, bull_case_catalyst, bear_case_risk, key_findings}
+porters_five_forces: {supplier_power, buyer_power, threat_of_substitutes, threat_of_new_entrants, competitive_rivalry — each:{score:1-10, confidence, narrative, peer_comparison}, industry_attractiveness_score}
+pestel: {political, economic, social, technological, environmental, legal — each:{key_factors, impact:positive|neutral|negative, confidence, narrative}}
+circularity_gap_analysis: {current_state, gap_percentage, confidence, barriers:{technical,economic,regulatory}, upside_scenario, narrative}
+swot: {strengths:[], weaknesses:[], opportunities:[], threats:[]}
+value_chain_analysis: {collection, transport, sorting_processing, disposal, recycling — each:{role, margin, margin_range, moat_strength, narrative}}
+moat_assessment: {permits_and_licensing, route_density_and_customer_stickiness, scale_and_unit_economics, capital_requirements, regulatory_and_environmental_compliance, brand_and_relationships — each:{score:1-10, confidence, narrative, peer_comparison}, overall_moat_strength, moat_narrative}
+unit_economics: {typical_ebitda_margin_percent, revenue_per_ton_hauling, revenue_per_ton_disposal, confidence, cost_structure:{labor,fuel,depreciation,tipping_fees,other — each as % of opex}, margin_drivers_ranked_by_impact:[], leverage_sensitivity:{fuel_10pct,labor_5pct,tipping_20pct}, peer_ebitda_benchmark, narrative}
+regulatory_and_esg_friction: {carbon_and_methane_liabilities:{scope,regulation_timeline,estimated_cost_impact,confidence,hedging_options,narrative}, upcoming_legislation:[], esg_monetizable:yes|no, esg_narrative, compliance_capex_estimate, narrative}
+red_flags: [{title, description, probability:High|Medium|Low, timeline, magnitude, trigger, mitigation, portfolio_impact}]
+investment_thesis: {headline, base_case:{scenario,ebitda_margin_trajectory,key_assumptions:[]}, bull_case:{scenario,key_catalysts:[],margin_upside}, bear_case:{scenario,key_triggers:[],margin_downside}, key_metrics_to_monitor:[]}`
 
 const CLAUDE_MODEL = 'claude-sonnet-4-5'
 
@@ -128,6 +76,10 @@ export default async function handler(req, res) {
 
   const userMessage = parts.join('\n')
 
+  // Token budget: narrow selections get 2000, comprehensive gets 4000
+  const isComprehensive = !sectionsStr
+  const maxTokens = isComprehensive ? 4000 : 2000
+
   const controller = new AbortController()
   const timeoutId = setTimeout(() => controller.abort(), 55000)
 
@@ -143,7 +95,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: CLAUDE_MODEL,
-        max_tokens: 2000,
+        max_tokens: maxTokens,
         temperature: 0,
         system: SYSTEM_PROMPT,
         messages: [
